@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 public class Parser extends SwingWorker<Boolean, Integer> {
     private WebCrawler crawler;
@@ -34,6 +33,7 @@ public class Parser extends SwingWorker<Boolean, Integer> {
     @Override
     protected Boolean doInBackground() throws Exception {
 
+        resetAllCounters();
         int workers = crawler.getWorkers();
         System.out.println(crawler.getDepth());
         int depth = crawler.getDepth();
@@ -43,13 +43,10 @@ public class Parser extends SwingWorker<Boolean, Integer> {
         int timeDelay = 1000;
         long start = System.currentTimeMillis();
         int timeLimit = crawler.getTimeLimit();
-        ActionListener time = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                crawler.setElapsedTime(formatTime(System.currentTimeMillis() - start));
-                if ((System.currentTimeMillis() - start) / 1000 >= timeLimit) {
-                    timeIsOver = true;
-                }
+        ActionListener time = e -> {
+            crawler.setElapsedTime(formatTime(System.currentTimeMillis() - start));
+            if ((System.currentTimeMillis() - start) / 1000 >= timeLimit) {
+                timeIsOver = true;
             }
         };
         timer = new Timer(timeDelay, time);
@@ -59,11 +56,16 @@ public class Parser extends SwingWorker<Boolean, Integer> {
                 (!timeIsOver || !crawler.timeLimitIsSelected())) {
             parsedPages = linkTable.parsedPages();
             publish(parsedPages);
-            Thread.currentThread().sleep(1000);
+            Thread.sleep(100);
             service.execute(new ParserWorker(this));
         }
 
         return true;
+    }
+
+    private void resetAllCounters() {
+        crawler.setParsedPages(0);
+        crawler.setElapsedTime(formatTime(0));
     }
 
     private String formatTime(long milliseconds) {
@@ -71,7 +73,7 @@ public class Parser extends SwingWorker<Boolean, Integer> {
         int seconds = x % 60;
         x /= 60;
         int minutes = x;
-        return String.format("%d:%02d", minutes,seconds);
+        return String.format("%d:%02d", minutes, seconds);
     }
 
     @Override
@@ -84,6 +86,7 @@ public class Parser extends SwingWorker<Boolean, Integer> {
     protected void done() {
         service.shutdownNow();
         crawler.enableAllElements();
+        crawler.unSelectRunButton();
         timer.stop();
         super.done();
     }
@@ -129,10 +132,6 @@ public class Parser extends SwingWorker<Boolean, Integer> {
         return queue.isEmpty();
     }
 
-    public String queuePeek() {
-        return queue.peek();
-    }
-
     public synchronized String queuePoll() {
         return queue.poll();
     }
@@ -152,14 +151,6 @@ public class Parser extends SwingWorker<Boolean, Integer> {
 
     public synchronized int getQueueSize() {
         return queue.size();
-    }
-
-    public synchronized void printQueue() {
-        queue.forEach(System.out::println);
-    }
-
-    public void incrementParsedPages() {
-        parsedPages++;
     }
 
 }

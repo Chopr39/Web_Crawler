@@ -28,8 +28,6 @@ public class WebCrawler extends JFrame implements ItemListener {
 
     public WebCrawler() {
 
-        this.parser = new Parser(this);
-
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
         setTitle(DEFAULT_TITLE);
@@ -166,20 +164,9 @@ public class WebCrawler extends JFrame implements ItemListener {
         return Integer.parseInt(depthField.getText());
     }
 
-    public int getTimeLimitField() {
-        return Integer.parseInt(timeLimitField.getText());
-    }
 
     public String getExportPath() {
         return exportTextField.getText();
-    }
-
-    public boolean depthIsEnabled() {
-        return depthCheckBox.isEnabled();
-    }
-
-    public boolean timeLimitIsEnabled() {
-        return timeLimitCheckBox.isEnabled();
     }
 
     public void disableAllElements() {
@@ -218,6 +205,7 @@ public class WebCrawler extends JFrame implements ItemListener {
     public void itemStateChanged(ItemEvent e) {
         if (e.getItem() == runButton) {
             if (runButton.isSelected()) {
+                parser = new Parser(this);
                 parser.execute();
             } else {
                 parser.done();
@@ -226,7 +214,7 @@ public class WebCrawler extends JFrame implements ItemListener {
         if (e.getItem() == depthCheckBox) {
             depthField.setEnabled(depthCheckBox.isSelected());
         }
-        
+
         if (e.getItem() == timeLimitCheckBox) {
             timeLimitField.setEnabled(timeLimitCheckBox.isSelected());
         }
@@ -246,6 +234,10 @@ public class WebCrawler extends JFrame implements ItemListener {
         } else {
             return Integer.parseInt(timeLimitField.getText());
         }
+    }
+
+    public void unSelectRunButton() {
+        runButton.setSelected(false);
     }
 }
 
