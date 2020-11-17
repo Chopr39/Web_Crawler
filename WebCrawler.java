@@ -5,7 +5,6 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.time.LocalDateTime;
 
 
 public class WebCrawler extends JFrame implements ItemListener {
@@ -145,9 +144,7 @@ public class WebCrawler extends JFrame implements ItemListener {
 
         setVisible(true);
 
-        exportButton.addActionListener(event -> {
-            parser.export();
-        });
+        exportButton.addActionListener(event -> parser.export());
 
     }
 
@@ -159,18 +156,18 @@ public class WebCrawler extends JFrame implements ItemListener {
         if (workersField.getText().isEmpty()) {
             return 1;
         }
-        return Integer.valueOf(workersField.getText());
+        return Integer.parseInt(workersField.getText());
     }
 
     public int getDepth() {
         if (depthField.getText().isEmpty()) {
             return 0;
         }
-        return Integer.valueOf(depthField.getText());
+        return Integer.parseInt(depthField.getText());
     }
 
     public int getTimeLimitField() {
-        return Integer.valueOf(timeLimitField.getText());
+        return Integer.parseInt(timeLimitField.getText());
     }
 
     public String getExportPath() {
@@ -227,19 +224,11 @@ public class WebCrawler extends JFrame implements ItemListener {
             }
         }
         if (e.getItem() == depthCheckBox) {
-            if (depthCheckBox.isSelected()) {
-                depthField.setEnabled(true);
-            } else {
-                depthField.setEnabled(false);
-            }
+            depthField.setEnabled(depthCheckBox.isSelected());
         }
         
         if (e.getItem() == timeLimitCheckBox) {
-            if (timeLimitCheckBox.isSelected()) {
-                timeLimitField.setEnabled(true);
-            } else {
-                timeLimitField.setEnabled(false);
-            }
+            timeLimitField.setEnabled(timeLimitCheckBox.isSelected());
         }
     }
 
