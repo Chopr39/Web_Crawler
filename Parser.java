@@ -95,13 +95,9 @@ public class Parser extends SwingWorker<Boolean, Integer> {
     }
 
     public void export() {
-        service.shutdownNow();
-        crawler.unSelectRunButton();
         String path = this.crawler.getExportPath();
         File file = new File(path);
-        File file1 = new File("C:/Dumps/LastCrawl" + System.currentTimeMillis() + ".txt");
         writeToFile(linkTable, file);
-        writeToFile(linkTable,file1);
     }
 
     private boolean writeToFile(LinkTable linkTable, File file) {
