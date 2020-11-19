@@ -52,7 +52,7 @@ public class WebCrawler extends JFrame implements ItemListener {
         //workers row
         JLabel workersSign = new JLabel("Workers: ");
         workersSign.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 41));
-        this.workersField = new JTextField("5");
+        this.workersField = new JTextField("1");
         JPanel workersPanel = new JPanel();
         workersPanel.setLayout(new BorderLayout(layoutGap, layoutGap));
         workersPanel.setBorder(padding);

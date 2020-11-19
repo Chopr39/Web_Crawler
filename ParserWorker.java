@@ -20,19 +20,17 @@ public class ParserWorker implements Runnable {
     @Override
     public void run() {
         if (parser.queueIsEmpty()) {
-            System.out.println("Queue is empty, interrupt thread " + Thread.currentThread().getName());
             return;
         }
         String task = parser.queuePoll();
 
-        System.out.println("New worker started. Name: " + Thread.currentThread().getName() + " Task is: " + task);
         String pageCode = null;
         try {
             pageCode = getPageCode(task);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        HashMap<String, String> links = null;
+        HashMap<String, String> links = new HashMap<>();
         try {
             links = getLinks(pageCode, task);
         } catch (Exception e) {
@@ -48,9 +46,19 @@ public class ParserWorker implements Runnable {
         if (parser.counterIsZero()) {
             parser.setCounter(parser.getQueueSize());
             parser.incrementDepth();
-            System.out.println("Processing depth updated: " + parser.getProcessedDepth());
         }
 
+    }
+
+    public void run(String url) {
+
+        String pageCode = null;
+        try {
+            pageCode = getPageCode(url);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        parser.getLinkTable().put(url, getTitle(pageCode));
     }
 
     public static String getPageCode(String url) throws IOException {
@@ -105,7 +113,6 @@ public class ParserWorker implements Runnable {
         if (rowLink.matches(regex)) {
             Matcher matcher = Pattern.compile("(https?://[^/]*/)(.*)").matcher(url);
             if (matcher.find()) {
-                System.out.println(matcher.group(1) + rowLink);
                 return matcher.group(1) + rowLink;
             } else {
                 return "Error! (" + rowLink + ").";

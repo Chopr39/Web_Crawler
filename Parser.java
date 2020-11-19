@@ -1,9 +1,10 @@
 package crawler;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -15,17 +16,15 @@ public class Parser extends SwingWorker<Boolean, Integer> {
     private Timer timer;
     private ConcurrentLinkedQueue<String> queue;
     private int processedDepth;
-    private int counter;
+    private volatile int counter;
     private volatile int parsedPages;
     private ExecutorService service;
     private boolean timeIsOver;
 
     public Parser(WebCrawler crawler) {
         this.crawler = crawler;
-        this.linkTable = new LinkTable();
-        queue = new ConcurrentLinkedQueue<>();
         this.parsedPages = 0;
-        this.processedDepth = 0;
+        this.processedDepth = 1;
         this.counter = 1;
         timeIsOver = false;
     }
@@ -33,12 +32,13 @@ public class Parser extends SwingWorker<Boolean, Integer> {
     @Override
     protected Boolean doInBackground() throws Exception {
 
+        this.linkTable = new LinkTable();
+        queue = new ConcurrentLinkedQueue<>();
         resetAllCounters();
         int workers = crawler.getWorkers();
-        System.out.println(crawler.getDepth());
         int depth = crawler.getDepth();
         queue.add(crawler.getUrl());
-        linkTable.put(crawler.getUrl(), null);
+        new ParserWorker(this).run(crawler.getUrl());
         crawler.disableAllElements();
         int timeDelay = 1000;
         long start = System.currentTimeMillis();
@@ -52,12 +52,12 @@ public class Parser extends SwingWorker<Boolean, Integer> {
         timer = new Timer(timeDelay, time);
         timer.start();
         service = Executors.newFixedThreadPool(workers);
-        while ((processedDepth <= depth || !crawler.depthIsSelected()) &&
+        while ((processedDepth < depth || !crawler.depthIsSelected()) &&
                 (!timeIsOver || !crawler.timeLimitIsSelected())) {
+            service.execute(new ParserWorker(this));
+            Thread.sleep(100);
             parsedPages = linkTable.parsedPages();
             publish(parsedPages);
-            Thread.sleep(100);
-            service.execute(new ParserWorker(this));
         }
 
         return true;
@@ -66,6 +66,9 @@ public class Parser extends SwingWorker<Boolean, Integer> {
     private void resetAllCounters() {
         crawler.setParsedPages(0);
         crawler.setElapsedTime(formatTime(0));
+        counter = 1;
+        processedDepth = 1;
+        timeIsOver = false;
     }
 
     private String formatTime(long milliseconds) {
@@ -92,9 +95,13 @@ public class Parser extends SwingWorker<Boolean, Integer> {
     }
 
     public void export() {
+        service.shutdownNow();
+        crawler.unSelectRunButton();
         String path = this.crawler.getExportPath();
         File file = new File(path);
+        File file1 = new File("C:/Dumps/LastCrawl" + System.currentTimeMillis() + ".txt");
         writeToFile(linkTable, file);
+        writeToFile(linkTable,file1);
     }
 
     private boolean writeToFile(LinkTable linkTable, File file) {
